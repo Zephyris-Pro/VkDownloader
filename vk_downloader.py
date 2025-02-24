@@ -49,13 +49,13 @@ class VKDownloader:
             if file_download_url:
                 filename = self.get_filename(file_download_url)
                 file_path = os.path.join(self.output_dir, filename)
-                print(f"Downloading {filename}...")
+                print(f"\033[36mDownloading {filename}...\033[0m")
 
                 with open(file_path, "wb") as file:
                     file.write(self.session.get(file_download_url).content)
-                print(f"{filename} downloaded successfully!")
+                print(f"\033[32m {filename} downloaded successfully!\033[0m")
         except Exception as e:
-            print(f"Error downloading {file_url}: {e}")
+            print(f"\033[31mError downloading {file_url}: {e}\033[0m")
 
     def download_files(self):
         response = self.session.get(self.url)
