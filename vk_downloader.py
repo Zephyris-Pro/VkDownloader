@@ -3,9 +3,13 @@ import os
 import re
 import json
 import requests
+
+from requests.adapters import HTTPAdapter
+from requests.packages.urllib3.util.retry import Retry
 from bs4 import BeautifulSoup
 from urllib import parse
 from concurrent.futures import ThreadPoolExecutor
+from tqdm import tqdm
 
 
 class VKDownloader:
@@ -14,10 +18,22 @@ class VKDownloader:
         self.output_dir = output_dir
         self.file_type = file_type
         self.threads = threads
+        self.progress_bar = None
         self.session = requests.Session()
         self.session.headers["User-Agent"] = (
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
             "(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+        )
+        self.session.mount(
+            "https://",
+            HTTPAdapter(
+                max_retries=Retry(
+                    total=3,
+                    backoff_factor=1,
+                    status_forcelist=[500, 502, 503, 504],
+                    allowed_methods=["GET"],
+                )
+            ),
         )
         os.makedirs(self.output_dir, exist_ok=True)
 
@@ -49,21 +65,23 @@ class VKDownloader:
             if file_download_url:
                 filename = self.get_filename(file_download_url)
                 file_path = os.path.join(self.output_dir, filename)
-                print(f"\033[36mDownloading {filename}...\033[0m")
 
+                response = self.session.get(file_download_url, stream=True)
                 with open(file_path, "wb") as file:
-                    file.write(self.session.get(file_download_url).content)
-                print(f"\033[32m {filename} downloaded successfully!\033[0m")
+                    for chunk in response.iter_content(32768):  # chunks of 32 kB
+                        if chunk:
+                            file.write(chunk)
+                self.progress_bar.update(1)
+
         except Exception as e:
             print(f"\033[31mError downloading {file_url}: {e}\033[0m")
 
     def download_files(self):
         response = self.session.get(self.url)
         files = self.find_files(response.content)
-
         total_pages = self.get_page_count(response.content)
 
-        self.session.headers["x-requested-with"] = "XMLHttpRequest"
+        self.session.headers["X-Requested-With"] = "XMLHttpRequest"
         for page in range(2, total_pages + 1):
             print(f"Scraping page {page}...")
             payload = {"al": 1, "al_ad": 0, "offset": page * 10, "part": 1}
@@ -72,10 +90,11 @@ class VKDownloader:
             )
             html_data = json_data.get("payload", [])[1][2]
             files.extend(self.find_files(html_data))
-        del self.session.headers["x-requested-with"]
-
-        with ThreadPoolExecutor(max_workers=self.threads) as executor:
-            executor.map(self.download_file, files)
+        del self.session.headers["X-Requested-With"]
+        with tqdm(total=len(files), unit=self.file_type) as pbar:
+            self.progress_bar = pbar
+            with ThreadPoolExecutor(max_workers=self.threads) as executor:
+                executor.map(self.download_file, files)
 
 
 def main():
