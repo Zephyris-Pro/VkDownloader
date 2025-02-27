@@ -4,22 +4,30 @@ import requests
 import sys
 from bs4 import BeautifulSoup
 
+
 def get_page_title(url):
     """Extracts the page title from <div class="bt_title"> or falls back to <title>."""
     try:
-        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        }
         response = requests.get(url, headers=headers, timeout=5)
         response.raise_for_status()
-        
+
         soup = BeautifulSoup(response.text, "html.parser")
         title_div = soup.find("div", class_="bt_title", id="bt_title")
-        title = title_div.text.strip() if title_div else soup.title.string.strip() if soup.title else "Unknown"
-        
+        title = (
+            title_div.text.strip()
+            if title_div
+            else soup.title.string.strip() if soup.title else "Unknown"
+        )
+
         print(f"✅ Title found: {title}")
         return re.sub(r'[\\/:*?"<>|]', "_", title)
     except requests.exceptions.RequestException as e:
         print(f"❌ Error fetching page: {e}")
         return "Unknown"
+
 
 def main():
     if len(sys.argv) != 2:
@@ -31,7 +39,9 @@ def main():
         print(f"Error: File '{file_path}' does not exist.")
         return
 
-    file_type = input("What type of file do you want to download? (e.g., pdf): ").strip()
+    file_type = input(
+        "What type of file do you want to download? (e.g., pdf): "
+    ).strip()
     threads = input("How many threads should be used?: ").strip()
 
     with open(file_path, "r", encoding="utf-8") as f:
@@ -66,6 +76,7 @@ def main():
         batch_file.write("\n".join(batch_lines))
 
     print("✅ 'batch_download.cmd' file successfully created.")
+
 
 if __name__ == "__main__":
     main()
