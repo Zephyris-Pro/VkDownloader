@@ -101,7 +101,7 @@ def main():
     parser = argparse.ArgumentParser(description="VK File Downloader")
     parser.add_argument("url", type=str, help="URL to scrape")
     parser.add_argument(
-        "--output_dir", type=str, default="./downloads", help="Output directory"
+        "--output_dir", type=str, default="./dl", help="Output directory"
     )
     parser.add_argument(
         "--file_type", type=str, default="pdf", help="File type to download"
