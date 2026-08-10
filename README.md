@@ -1,3 +1,5 @@
+
+
 # VkDownloader - Command Line Usage
 
 **VkDownloader** is a command-line program designed to scrape and download files from a specified URL. It allows customization of the output directory, file type, and the number of simultaneous downloads using command-line arguments. Additionally, it includes a batch download feature to automate multiple downloads.
@@ -39,6 +41,8 @@ The batch download feature allows you to automate the download of files from mul
 ```bash
 python batch_download_file_creator.py "path_to_txt_file.txt"
 ```
+
+*Note: When running this script, you will be prompted interactively to enter the desired file type and number of threads.*
 
 #### How It Works
 
